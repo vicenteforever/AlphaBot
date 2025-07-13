@@ -9,6 +9,7 @@ from functools import partial
 from app.core.config import settings
 from app.services.data_sources.base import DataSourceBase
 from app.schemas.stock import StockInfo, StockPriceHistory, StockPricePoint
+import traceback
 
 class AKShareDataSource(DataSourceBase):
     """AKShare 数据源实现"""
@@ -28,6 +29,8 @@ class AKShareDataSource(DataSourceBase):
         try:
             # 获取A股股票列表
             stock_info_a_code_name_df = await self._run_sync(ak.stock_info_a_code_name)
+
+            print(stock_info_a_code_name_df)
             
             # 过滤匹配的股票
             filtered_stocks = stock_info_a_code_name_df[
@@ -56,6 +59,7 @@ class AKShareDataSource(DataSourceBase):
             
             return results[:10]  # 限制返回数量
         except Exception as e:
+            traceback.print_exc()
             print(f"搜索股票时出错: {str(e)}")
             return []
     
@@ -85,6 +89,8 @@ class AKShareDataSource(DataSourceBase):
             
             # 获取股票名称
             stock_info_df = await self._run_sync(ak.stock_info_a_code_name)
+
+            print(stock_info_df)
             stock_info = stock_info_df[stock_info_df['code'] == code]
             name = stock_info.iloc[0]['name'] if not stock_info.empty else ""
             
@@ -115,6 +121,7 @@ class AKShareDataSource(DataSourceBase):
             )
             return stock_info
         except Exception as e:
+            traceback.print_exc()
             print(f"获取股票信息时出错: {str(e)}")
             return None
     
@@ -189,6 +196,7 @@ class AKShareDataSource(DataSourceBase):
             
             return StockPriceHistory(symbol=symbol, data=price_points)
         except Exception as e:
+            traceback.print_exc()
             print(f"获取股票历史价格时出错: {str(e)}")
             return None
     
@@ -261,6 +269,7 @@ class AKShareDataSource(DataSourceBase):
             
             return result
         except Exception as e:
+            traceback.print_exc()
             print(f"获取基本面数据时出错: {str(e)}")
             return {}
     
@@ -299,6 +308,7 @@ class AKShareDataSource(DataSourceBase):
             
             return df
         except Exception as e:
+            traceback.print_exc()
             print(f"获取历史数据时出错: {str(e)}")
             return None
     
@@ -335,6 +345,7 @@ class AKShareDataSource(DataSourceBase):
                         
                         result["feed"] = feed
                 except Exception as e:
+                    traceback.print_exc()
                     print(f"获取股票新闻时出错: {str(e)}")
             
             # 获取政策新闻并计算政策共振系数
@@ -400,10 +411,12 @@ class AKShareDataSource(DataSourceBase):
                         result["policy_resonance"]["policies"] = relevant_policies[:5]  # 只返回最相关的5条
             
             except Exception as e:
+                traceback.print_exc()
                 print(f"计算政策共振系数时出错: {str(e)}")
             
             return result
         except Exception as e:
+            traceback.print_exc()
             print(f"获取新闻情绪时出错: {str(e)}")
             return {
                 "feed": [],
@@ -440,6 +453,7 @@ class AKShareDataSource(DataSourceBase):
             
             return []
         except Exception as e:
+            traceback.print_exc()
             print(f"获取行业关键词时出错: {str(e)}")
             return []
     
@@ -632,10 +646,12 @@ class AKShareDataSource(DataSourceBase):
                 }
             
             except Exception as e:
+                traceback.print_exc()
                 print(f"获取板块联动性时出错: {str(e)}")
                 return self._default_sector_linkage()
         
         except Exception as e:
+            traceback.print_exc()
             print(f"获取板块联动性时出错: {str(e)}")
             return self._default_sector_linkage()
     
@@ -667,6 +683,7 @@ class AKShareDataSource(DataSourceBase):
             return self._default_concept_distribution()
         
         except Exception as e:
+            traceback.print_exc()
             print(f"获取概念涨跌分布时出错: {str(e)}")
             return self._default_concept_distribution()
     
@@ -765,6 +782,7 @@ class AKShareDataSource(DataSourceBase):
             return result
             
         except Exception as e:
+            traceback.print_exc()
             print(f"获取分时数据出错: {str(e)}")
             # 出错时返回模拟数据
             return self._generate_mock_intraday_data(symbol)
@@ -884,6 +902,7 @@ class AKShareDataSource(DataSourceBase):
                             
                             return result
                     except Exception as e:
+                        traceback.print_exc()
                         print(f"获取股票新闻时出错: {str(e)}")
             
             # 获取市场概览新闻
@@ -908,6 +927,7 @@ class AKShareDataSource(DataSourceBase):
                     
                     return result
             except Exception as e:
+                traceback.print_exc()
                 print(f"获取百度财经新闻时出错: {str(e)}")
             
             # 如果百度财经新闻获取失败，尝试其他来源
@@ -932,6 +952,7 @@ class AKShareDataSource(DataSourceBase):
                     
                     return result
             except Exception as e:
+                traceback.print_exc()
                 print(f"获取东方财富快讯时出错: {str(e)}")
             
             # 如果所有来源都失败，尝试获取新浪财经新闻
@@ -956,9 +977,11 @@ class AKShareDataSource(DataSourceBase):
                     
                     return result
             except Exception as e:
+                traceback.print_exc()
                 print(f"获取新浪财经新闻时出错: {str(e)}")
             
             return result
         except Exception as e:
+            traceback.print_exc()
             print(f"获取市场新闻和公告时出错: {str(e)}")
             return []

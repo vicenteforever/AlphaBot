@@ -5,6 +5,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 import logging
+import traceback
 
 from app.core.config import settings
 from app.models.stock import Stock, StockPrice, SavedStock
@@ -13,6 +14,14 @@ from app.services.data_sources.factory import DataSourceFactory
 from app.models.user import User
 
 logger = logging.getLogger("uvicorn")
+logger.setLevel(logging.INFO)
+
+# 输出到控制台
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('stock-%(asctime)s - %(levelname)s - %(message)s'))
+
+# 加入到 logger
+logger.addHandler(console_handler)
 
 class StockService:
     """股票服务类，处理股票数据的获取和处理"""
@@ -49,6 +58,7 @@ class StockService:
                     
                     db.commit()
                 except Exception as e:
+                    traceback.print_exc()
                     print(f"保存股票 {stock_info.symbol} 时出错: {str(e)}")
                     db.rollback()
         
@@ -57,6 +67,8 @@ class StockService:
     @staticmethod
     async def get_stock_info(symbol: str, data_source: str = None) -> Optional[StockInfo]:
         """获取股票详细信息"""
+
+        print(f"get_stock_info {symbol} {data_source}");
         data_source = DataSourceFactory.get_data_source(data_source)
         return await data_source.get_stock_info(symbol)
     
@@ -124,6 +136,7 @@ class StockService:
             
             return SavedStockSchema(**saved_stock_dict)
         except Exception as e:
+            traceback.print_exc()
             print(f"保存股票时出错: {str(e)}")
             db.rollback()
             return None
@@ -156,6 +169,7 @@ class StockService:
                 result.append(SavedStockSchema(**saved_stock_dict))
             return result
         except Exception as e:
+            traceback.print_exc()
             print(f"获取收藏股票时出错: {str(e)}")
             return []
     
@@ -179,6 +193,7 @@ class StockService:
             db.commit()
             return result > 0
         except Exception:
+            traceback.print_exc()
             db.rollback()
             return False
             
@@ -258,6 +273,7 @@ class StockService:
                     try:
                         db.commit()
                     except Exception as e:
+                        traceback.print_exc()
                         db.rollback()
                         print(f"保存股票 {symbol} 数据时出错: {str(e)}")
                         return {"success": False, "error": f"保存股票数据时出错: {str(e)}"}
@@ -293,9 +309,11 @@ class StockService:
                         }
                     }
                 except Exception as e:
+                    traceback.print_exc()
                     print(f"获取所有股票时出错: {str(e)}")
                     return {"success": False, "error": f"获取所有股票时出错: {str(e)}"}
         except Exception as e:
+            traceback.print_exc()
             print(f"更新股票数据时出错: {str(e)}")
             return {"success": False, "error": f"更新股票数据时出错: {str(e)}"}
     
@@ -366,5 +384,6 @@ class StockService:
             return fundamentals
                 
         except Exception as e:
+            traceback.print_exc()
             logger.error(f"获取基本面数据时出错: {str(e)}")
             return {"error": f"获取基本面数据时出错: {str(e)}"} 

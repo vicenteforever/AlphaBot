@@ -125,7 +125,7 @@ def fetch_stock_data_akshare(symbols):
             df = ak.stock_zh_a_hist(
                 symbol=code, 
                 period="daily", 
-                start_date="20180101", 
+                start_date="20250101",
                 end_date=datetime.now().strftime("%Y%m%d"), 
                 adjust="qfq"
             )
@@ -366,6 +366,18 @@ def prepare_training_data(stock_data_dict):
         return None
 
 def train_models(data_source='akshare', symbols=None):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    # 输出到控制台
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter('stock-%(asctime)s - %(levelname)s - %(message)s'))
+
+    # 加入到 logger
+    logger.addHandler(console_handler)
+
+    logger.info("这是一个测试日志")
+
     """
     训练模型并保存
     
@@ -531,6 +543,7 @@ def train_models(data_source='akshare', symbols=None):
                 'sentiment_accuracy': sentiment_accuracy
             }
         }
+
         
         joblib.dump(model_data, settings.AI_MODEL_PATH)
         logger.info(f"模型已保存到 {settings.AI_MODEL_PATH}")
