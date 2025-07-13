@@ -215,7 +215,7 @@ def fetch_stock_data_tushare(symbols, token=None):
     
     return all_data
 
-def add_technical_indicators(df):
+def add_technical_indicators(df, symbols=None):
     """
     添加技术指标
     
@@ -296,6 +296,9 @@ def add_technical_indicators(df):
     df['sentiment'] = pd.cut(df['future_return_5d'], bins=[-float('inf'), -0.02, 0.02, float('inf')], labels=[0, 1, 2])
     # 将NaN值填充为中性(1)
     df['sentiment'] = df['sentiment'].fillna(1).astype(int)
+
+    if symbols is not None:
+        df['symbol'] = symbols
     
     # 删除含有 NaN 的行
     df = df.dropna()
@@ -338,7 +341,7 @@ def prepare_training_data(stock_data_dict):
                 df['volume'] = df['volume'].apply(lambda x: max(x, 1))
             
             # 添加技术指标
-            processed_df = add_technical_indicators(df)
+            processed_df = add_technical_indicators(df, symbol)
             
             # 确保没有NaN值
             if processed_df.isnull().any().any():
@@ -346,7 +349,7 @@ def prepare_training_data(stock_data_dict):
                 processed_df = processed_df.fillna(method='ffill').fillna(method='bfill')
             
             # 添加股票代码列
-            processed_df['symbol'] = symbol
+            #processed_df['symbol'] = symbol
             
             all_processed_data.append(processed_df)
             
@@ -393,19 +396,21 @@ def train_models(data_source='akshare', symbols=None):
         logger.error(f"不支持的数据源: {data_source}")
         return
     
-    if not stock_data:
-        logger.error("未能获取任何股票数据，使用生成的样本数据进行训练")
-        df = generate_sample_data(2000)
-    else:
-        # 准备训练数据
-        df = prepare_training_data(stock_data)
-        if df is None or len(df) < 1000:
-            logger.warning("真实数据不足，补充生成样本数据")
-            sample_df = generate_sample_data(2000)
-            if df is not None:
-                df = pd.concat([df, sample_df])
-            else:
-                df = sample_df
+    # if not stock_data:
+    #     logger.error("未能获取任何股票数据，使用生成的样本数据进行训练")
+    #     df = generate_sample_data(2000)
+    # else:
+    #     # 准备训练数据
+    #     df = prepare_training_data(stock_data)
+    #     if df is None or len(df) < 1000:
+    #         logger.warning("真实数据不足，补充生成样本数据")
+    #         sample_df = generate_sample_data(2000)
+    #         if df is not None:
+    #             df = pd.concat([df, sample_df])
+    #         else:
+    #             df = sample_df
+
+    df = prepare_training_data(stock_data)
     
     # 最后检查数据是否有NaN值
     if df.isnull().any().any():

@@ -108,10 +108,11 @@ build_and_start() {
 
 # 显示日志
 show_logs() {
-    read -p "是否查看服务日志? (y/n): " show_logs
-    if [[ $show_logs == "y" || $show_logs == "Y" ]]; then
-        docker-compose logs -f
-    fi
+    docker-compose logs -f
+#    read -p "是否查看服务日志? (y/n): " show_logs
+#    if [[ $show_logs == "y" || $show_logs == "Y" ]]; then
+#        docker-compose logs -f
+#    fi
 }
 
 # 主函数
