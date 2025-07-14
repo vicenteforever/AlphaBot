@@ -5,6 +5,7 @@ from datetime import datetime
 import requests
 import random
 from datetime import timedelta
+import traceback
 
 from app.core.config import settings
 from app.services.data_sources.base import DataSourceBase
@@ -28,7 +29,11 @@ class AlphaVantageDataSource(DataSourceBase):
                 "apikey": self.api_key
             }
             response = await self.client.get(self.base_url, params=params)
+
+
             data = response.json()
+
+            print(response)
             
             if "bestMatches" not in data:
                 return []
@@ -45,6 +50,7 @@ class AlphaVantageDataSource(DataSourceBase):
             
             return results
         except Exception as e:
+            traceback.print_exc()
             print(f"搜索股票时出错: {str(e)}")
             return []
     
@@ -59,6 +65,8 @@ class AlphaVantageDataSource(DataSourceBase):
             }
             response = await self.client.get(self.base_url, params=params)
             quote_data = response.json()
+
+            print(quote_data)
             
             # 获取公司概览
             params = {
@@ -89,6 +97,7 @@ class AlphaVantageDataSource(DataSourceBase):
             
             return stock_info
         except Exception as e:
+            traceback.print_exc()
             print(f"获取股票信息时出错: {str(e)}")
             return None
     
@@ -121,6 +130,8 @@ class AlphaVantageDataSource(DataSourceBase):
             }
             response = await self.client.get(self.base_url, params=params)
             data = response.json()
+
+            print(data)
             
             # 提取时间序列数据
             time_series_key = next((k for k in data.keys() if "Time Series" in k), None)
@@ -136,13 +147,25 @@ class AlphaVantageDataSource(DataSourceBase):
             
             # 根据时间范围筛选数据
             if range == "1m":
-                df = df.last('30D')
+                #df = df.last('30D')
+                end_date = df.index.max()
+                start_date = end_date - pd.Timedelta(days=30)
+                df = df.loc[start_date:end_date]
             elif range == "3m":
-                df = df.last('90D')
+                # df = df.last('90D')
+                end_date = df.index.max()
+                start_date = end_date - pd.Timedelta(days=90)
+                df = df.loc[start_date:end_date]
             elif range == "6m":
-                df = df.last('180D')
+                #df = df.last('180D')
+                end_date = df.index.max()
+                start_date = end_date - pd.Timedelta(days=180)
+                df = df.loc[start_date:end_date]
             elif range == "1y":
-                df = df.last('365D')
+                #df = df.last('365D')
+                end_date = df.index.max()
+                start_date = end_date - pd.Timedelta(days=365)
+                df = df.loc[start_date:end_date]
             
             # 重命名列
             df.columns = [col.split('. ')[1] for col in df.columns]
@@ -166,8 +189,14 @@ class AlphaVantageDataSource(DataSourceBase):
             
             return StockPriceHistory(symbol=symbol, data=price_points)
         except Exception as e:
+            traceback.print_exc()
             print(f"获取股票历史价格时出错: {str(e)}")
             return None
+
+    def filter_last_days(df: pd.DataFrame, days: int = 30) -> pd.DataFrame:
+        end = df.index.max()
+        start = end - pd.Timedelta(days=days)
+        return df.loc[start:end]
     
     async def get_fundamentals(self, symbol: str) -> Dict[str, Any]:
         """获取公司基本面数据"""
@@ -183,6 +212,7 @@ class AlphaVantageDataSource(DataSourceBase):
             
             return data
         except Exception as e:
+            traceback.print_exc()
             print(f"获取基本面数据时出错: {str(e)}")
             return {}
     
@@ -220,6 +250,7 @@ class AlphaVantageDataSource(DataSourceBase):
             
             return df
         except Exception as e:
+            traceback.print_exc()
             print(f"获取历史数据时出错: {str(e)}")
             return None
     
@@ -257,6 +288,7 @@ class AlphaVantageDataSource(DataSourceBase):
                 "sentiment_score_avg": avg_sentiment
             }
         except Exception as e:
+            traceback.print_exc()
             print(f"获取新闻情绪时出错: {str(e)}")
             return {}
     
@@ -290,6 +322,7 @@ class AlphaVantageDataSource(DataSourceBase):
                 "total_in_sector": 0
             }
         except Exception as e:
+            traceback.print_exc()
             print(f"获取板块联动性时出错: {str(e)}")
             return {
                 "sector_name": "未知板块",
@@ -397,10 +430,12 @@ class AlphaVantageDataSource(DataSourceBase):
                 return result
                 
             except Exception as e:
+                traceback.print_exc()
                 print(f"[AlphaVantage] 获取分时数据失败: {str(e)}")
                 return self._generate_mock_intraday_data(symbol)
                 
         except Exception as e:
+            traceback.print_exc()
             print(f"[AlphaVantage] 获取分时数据出错: {str(e)}")
             # 出错时返回模拟数据
             return self._generate_mock_intraday_data(symbol)
@@ -544,5 +579,6 @@ class AlphaVantageDataSource(DataSourceBase):
             return result
         
         except Exception as e:
+            traceback.print_exc()
             print(f"获取市场新闻和公告时出错: {str(e)}")
             return [] 
